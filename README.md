@@ -23,7 +23,3 @@ domains:
 ```
 
 
-
-## TODO
-
-- [ ] Automatic reloading of configuration file
