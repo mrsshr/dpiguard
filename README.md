@@ -5,6 +5,12 @@ Configurable TLS ClientHello fragmentation tool
 
 
 
+* TLS fragmentation only for specified domains
+* Support running as a service (Manual installation)
+* Small memory footprint
+
+
+
 ## Example configuration
 
 ```yaml
