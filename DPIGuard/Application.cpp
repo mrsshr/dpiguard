@@ -20,10 +20,9 @@ Application::Application()
 int Application::Run(int argc, wchar_t* argv[])
 {
     if (!StartServiceMode())
-    {
         StartMainThread();
-        WaitMainThread();
-    }
+
+    WaitMainThread();
 
     return 0;
 }
@@ -313,7 +312,8 @@ void Application::StartMainThread()
 
 void Application::WaitMainThread()
 {
-    m_mainThread->join();
+    if (m_mainThread && m_mainThread->joinable())
+        m_mainThread->join();
 }
 
 void Application::StopWinDivert()
