@@ -53,6 +53,7 @@ private:
     SERVICE_STATUS_HANDLE m_serviceStatusHandle;
 
     std::unique_ptr<std::thread> m_mainThread;
+    std::mutex m_mainThreadLock;
 
     WinDivertLib m_divert;
 };

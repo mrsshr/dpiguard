@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <thread>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <system_error>
 

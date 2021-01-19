@@ -373,6 +373,8 @@ void Application::StartMainThread()
 
 void Application::WaitMainThread()
 {
+    std::unique_lock<std::mutex> locked(m_mainThreadLock);
+
     if (m_mainThread && m_mainThread->joinable())
         m_mainThread->join();
 }
@@ -403,9 +405,13 @@ void Application::StopWinDivert()
 BOOL Application::ConsoleCtrlHandler(DWORD ctrlType)
 {
     if (ctrlType == CTRL_C_EVENT ||
-        ctrlType == CTRL_BREAK_EVENT)
+        ctrlType == CTRL_BREAK_EVENT ||
+        ctrlType == CTRL_CLOSE_EVENT ||
+        ctrlType == CTRL_LOGOFF_EVENT ||
+        ctrlType == CTRL_SHUTDOWN_EVENT)
     {
         m_divert.Shutdown();
+        WaitMainThread();
         return TRUE;
     }
 
