@@ -48,6 +48,8 @@ bool ApplicationConfig::Load(YAML::Node configNode)
     std::list<DomainConfig> domainConfigs;
 
     globalConfig.includeSubdomains = true;
+    globalConfig.httpFragmentationEnabled = true;
+    globalConfig.httpFragmentationOffset = 2;
     globalConfig.tlsFragmentationEnabled = true;
     globalConfig.tlsFragmentationOffset = 2;
 
@@ -69,6 +71,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             return false;
 
         YAML::Node includeSubdomainsNode = globalConfigNode["includeSubdomains"];
+        YAML::Node httpFragmentationNode = globalConfigNode["httpFragmentation"];
         YAML::Node tlsFragmentationNode = globalConfigNode["tlsFragmentation"];
 
         if (includeSubdomainsNode.IsDefined())
@@ -79,6 +82,36 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             try
             {
                 globalConfig.includeSubdomains = includeSubdomainsNode.as<bool>();
+            }
+            catch (const YAML::Exception&)
+            {
+            }
+        }
+
+        if (httpFragmentationNode.IsDefined())
+        {
+            if (!tlsFragmentationNode.IsMap())
+                return false;
+
+            YAML::Node httpFragmentationEnabledNode = httpFragmentationNode["enabled"];
+            YAML::Node httpFragmentationOffsetNode = httpFragmentationNode["offset"];
+
+            if (httpFragmentationEnabledNode.IsDefined() && !httpFragmentationEnabledNode.IsScalar())
+                return false;
+            if (httpFragmentationOffsetNode.IsDefined() && !httpFragmentationOffsetNode.IsScalar())
+                return false;
+
+            try
+            {
+                globalConfig.httpFragmentationEnabled = httpFragmentationEnabledNode.as<bool>();
+            }
+            catch (const YAML::Exception&)
+            {
+            }
+
+            try
+            {
+                globalConfig.httpFragmentationOffset = httpFragmentationOffsetNode.as<size_t>();
             }
             catch (const YAML::Exception&)
             {
@@ -126,6 +159,8 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             DomainConfig domainConfig;
 
             domainConfig.includeSubdomains = globalConfig.includeSubdomains;
+            domainConfig.httpFragmentationEnabled = globalConfig.httpFragmentationEnabled;
+            domainConfig.httpFragmentationOffset = globalConfig.httpFragmentationOffset;
             domainConfig.tlsFragmentationEnabled = globalConfig.tlsFragmentationEnabled;
             domainConfig.tlsFragmentationOffset = globalConfig.tlsFragmentationOffset;
 
@@ -133,6 +168,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             {
                 YAML::Node domainNode = domainConfigNode["domain"];
                 YAML::Node includeSubdomainsNode = domainConfigNode["includeSubdomains"];
+                YAML::Node httpFragmentationNode = globalConfigNode["httpFragmentation"];
                 YAML::Node tlsFragmentationNode = domainConfigNode["tlsFragmentation"];
 
                 if (!domainNode.IsScalar())
@@ -159,6 +195,36 @@ bool ApplicationConfig::Load(YAML::Node configNode)
                     try
                     {
                         domainConfig.includeSubdomains = includeSubdomainsNode.as<bool>();
+                    }
+                    catch (const YAML::Exception&)
+                    {
+                    }
+                }
+
+                if (httpFragmentationNode.IsDefined())
+                {
+                    if (!httpFragmentationNode.IsMap())
+                        return false;
+
+                    YAML::Node httpFragmentationEnabledNode = httpFragmentationNode["enabled"];
+                    YAML::Node httpFragmentationOffsetNode = httpFragmentationNode["offset"];
+
+                    if (httpFragmentationEnabledNode.IsDefined() && !httpFragmentationEnabledNode.IsScalar())
+                        return false;
+                    if (httpFragmentationOffsetNode.IsDefined() && !httpFragmentationOffsetNode.IsScalar())
+                        return false;
+
+                    try
+                    {
+                        domainConfig.httpFragmentationEnabled = httpFragmentationEnabledNode.as<bool>();
+                    }
+                    catch (const YAML::Exception&)
+                    {
+                    }
+
+                    try
+                    {
+                        domainConfig.httpFragmentationOffset = httpFragmentationOffsetNode.as<size_t>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -248,6 +314,10 @@ YAML::Node ApplicationConfig::Save()
     YAML::Node globalConfigNode = configNode["global"];
     globalConfigNode["includeSubdomains"] = m_globalConfig.includeSubdomains;
 
+    YAML::Node httpFragmentationNode = globalConfigNode["httpFragmentation"];
+    httpFragmentationNode["enabled"] = m_globalConfig.httpFragmentationEnabled;
+    httpFragmentationNode["offset"] = m_globalConfig.httpFragmentationOffset;
+
     YAML::Node tlsFragmentationNode = globalConfigNode["tlsFragmentation"];
     tlsFragmentationNode["enabled"] = m_globalConfig.tlsFragmentationEnabled;
     tlsFragmentationNode["offset"] = m_globalConfig.tlsFragmentationOffset;
@@ -267,6 +337,12 @@ YAML::Node ApplicationConfig::Save()
 
             if (m_globalConfig.includeSubdomains != domainConfig.includeSubdomains)
                 domainConfigNode["includeSubdomains"] = domainConfig.includeSubdomains;
+
+            if (m_globalConfig.httpFragmentationEnabled != domainConfig.httpFragmentationEnabled)
+                domainConfigNode["httpFragmentation"]["enabled"] = domainConfig.httpFragmentationEnabled;
+            if (m_globalConfig.httpFragmentationOffset != domainConfig.httpFragmentationOffset)
+                domainConfigNode["httpFragmentation"]["offset"] = domainConfig.httpFragmentationOffset;
+
             if (m_globalConfig.tlsFragmentationEnabled != domainConfig.tlsFragmentationEnabled)
                 domainConfigNode["tlsFragmentation"]["enabled"] = domainConfig.tlsFragmentationEnabled;
             if (m_globalConfig.tlsFragmentationOffset != domainConfig.tlsFragmentationOffset)

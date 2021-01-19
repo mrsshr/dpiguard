@@ -9,12 +9,18 @@ public:
         {
             includeSubdomains = false;
 
+            httpFragmentationEnabled = false;
+            httpFragmentationOffset = 0;
+
             tlsFragmentationEnabled = false;
             tlsFragmentationOffset = 0;
         }
 
         std::string domain;
         bool includeSubdomains;
+
+        bool httpFragmentationEnabled;
+        size_t httpFragmentationOffset;
 
         bool tlsFragmentationEnabled;
         size_t tlsFragmentationOffset;
@@ -26,6 +32,9 @@ public:
         {
             includeSubdomains = false;
 
+            httpFragmentationEnabled = false;
+            httpFragmentationOffset = 0;
+
             tlsFragmentationEnabled = false;
             tlsFragmentationOffset = 0;
         }
@@ -34,6 +43,12 @@ public:
         {
             if (includeSubdomains != rhs.includeSubdomains)
                 return false;
+
+            if (httpFragmentationEnabled != rhs.httpFragmentationEnabled)
+                return false;
+            if (httpFragmentationOffset != rhs.httpFragmentationOffset)
+                return false;
+
             if (tlsFragmentationEnabled != rhs.tlsFragmentationEnabled)
                 return false;
             if (tlsFragmentationOffset != rhs.tlsFragmentationOffset)
@@ -43,6 +58,9 @@ public:
         }
 
         bool includeSubdomains;
+
+        bool httpFragmentationEnabled;
+        size_t httpFragmentationOffset;
 
         bool tlsFragmentationEnabled;
         size_t tlsFragmentationOffset;

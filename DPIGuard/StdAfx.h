@@ -7,9 +7,10 @@
 #include <tchar.h>
 
 #include <cstdint>
+#include <cctype>
 
+#include <array>
 #include <string>
-#include <set>
 #include <list>
 #include <vector>
 
@@ -17,7 +18,6 @@
 #include <thread>
 #include <memory>
 #include <stdexcept>
-#include <shared_mutex>
 #include <system_error>
 
 #include <windivert.h>

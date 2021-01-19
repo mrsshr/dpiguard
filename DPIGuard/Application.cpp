@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "Application.h"
 #include "BufferReader.h"
+#include "HttpRequestParser.h"
 #include "Utils.h"
 
 Application theApp;
@@ -9,8 +10,7 @@ static wchar_t SERVICE_NAME[] = L"DPIGuard";
 
 static const char* WINDIVERT_HTTPS_FILTER = \
 "!loopback && outbound && (ip || ipv6) && length <= 4096 && " \
-"(tcp.DstPort == 443) && " \
-"(tcp.PayloadLength > 0 && tcp.PayloadLength <= 1024)";
+"((tcp.DstPort == 80 || tcp.DstPort == 443) && tcp.PayloadLength > 0)";
 
 Application::Application()
     : m_appConfigModifiedTime(), m_serviceMode(false), m_serviceStatusHandle(nullptr)
@@ -94,8 +94,52 @@ bool Application::HandlePacket(WinDivertPacket& packet)
     if (!packet.Tcp())
         return false;
 
-    if (Utils::ntohs(packet.Tcp()->DstPort) == 443)
+    switch (Utils::ntohs(packet.Tcp()->DstPort))
+    {
+    case 80:
+        return HandleHttp(packet);
+    case 443:
         return HandleHttps(packet);
+    default:
+        break;
+    }
+
+    return false;
+}
+
+bool Application::HandleHttp(WinDivertPacket& packet)
+{
+    if (!packet.Data())
+        return false;
+
+    try
+    {
+        const uint8_t* data = packet.Data();
+        uint32_t dataLength = packet.DataLength();
+
+        HttpRequestParser parser;
+        HttpRequestParser::Result result = parser.Parse(data, dataLength);
+
+        if (result == HttpRequestParser::Result::Bad)
+            return false;
+
+        const std::array<int, 4>* header = parser.GetHeader("Host");
+        if (header == nullptr)
+            return false;
+
+        int valueBegin = header->at(2);
+        int valueEnd = header->at(3);
+
+        std::string hostName(data + valueBegin, data + valueEnd);
+
+        return HandleHttpFragmentation(packet, hostName, valueBegin);
+    }
+    catch (const std::exception& e)
+    {
+        printf("[-] Unexpected error while parsing HTTP packet (%s)\n", e.what());
+
+        // TODO Dump raw packet bytes
+    }
 
     return false;
 }
@@ -218,20 +262,37 @@ bool Application::HandleHttps(WinDivertPacket& packet)
     return false;
 }
 
+bool Application::HandleHttpFragmentation(WinDivertPacket& packet, const std::string& hostName, size_t hostNameOffset)
+{
+    const ApplicationConfig::DomainConfig* domainConfig = GetDomainConfig(hostName);
+
+    if (domainConfig == nullptr)
+    {
+        printf("[+] HTTP[Skip]: %s\n", hostName.c_str());
+        return false;
+    }
+
+    if (!domainConfig->httpFragmentationEnabled)
+        return false;
+
+    printf("[+] HTTP[OK]: %s\n", hostName.c_str());
+    return DoTcpFragmentation(packet, domainConfig->httpFragmentationOffset);
+}
+
 bool Application::HandleTlsFragmentation(WinDivertPacket& packet, const std::string& serverName, size_t serverNameOffset)
 {
     const ApplicationConfig::DomainConfig* domainConfig = GetDomainConfig(serverName);
 
     if (domainConfig == nullptr)
     {
-        printf("[-] Skip: %s\n", serverName.c_str());
+        printf("[+] TLS[Skip]: %s\n", serverName.c_str());
         return false;
     }
 
     if (!domainConfig->tlsFragmentationEnabled)
         return false;
 
-    printf("[+] OK: %s\n", serverName.c_str());
+    printf("[+] TLS[OK]: %s\n", serverName.c_str());
     return DoTcpFragmentation(packet, domainConfig->tlsFragmentationOffset);
 }
 

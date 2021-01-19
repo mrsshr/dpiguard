@@ -13,8 +13,10 @@ private:
     void Main();
 
     bool HandlePacket(WinDivertPacket& packet);
+    bool HandleHttp(WinDivertPacket& packet);
     bool HandleHttps(WinDivertPacket& packet);
 
+    bool HandleHttpFragmentation(WinDivertPacket& packet, const std::string& hostName, size_t hostNameOffset);
     bool HandleTlsFragmentation(WinDivertPacket& packet, const std::string& serverName, size_t serverNameOffset);
 
     bool DoTcpFragmentation(WinDivertPacket& packet, size_t offset);
