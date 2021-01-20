@@ -112,7 +112,7 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert32.sys" 
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>TREE /F $(SolutionDir)</Command>
+      <Command>TREE "$(SolutionDir)" /F</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -147,7 +147,7 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert32.sys" 
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>TREE /F $(SolutionDir)</Command>
+      <Command>TREE "$(SolutionDir)" /F</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -173,7 +173,7 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" 
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>TREE /F $(SolutionDir)</Command>
+      <Command>TREE "$(SolutionDir)" /F</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -206,7 +206,7 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" 
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>TREE /F $(SolutionDir)</Command>
+      <Command>TREE "$(SolutionDir)" /F</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
