@@ -23,11 +23,12 @@ jobs:
     - name: Extract WinDivert
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: Expand-Archive -Path .\WinDivert-2.2.0-A.zip -DestinationPath .\ThirdParty -Force
-      shell: powershell
 
     - name: Overwrite WinDivert
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: RD /S /Q ThirdParty\WinDivert && RENAME ThirdParty\WinDivert-2.2.0-A WinDivert
+      run: |
+        Remove-Item -Path .\ThirdParty\WinDivert\ -Recurse
+        Move-Item -Path .\ThirdParty\WinDivert-2.2.0-A -Destination .\ThirdParty\WinDivert
 
     - name: List files
       working-directory: ${{env.GITHUB_WORKSPACE}}
