@@ -27,7 +27,7 @@ jobs:
 
     - name: Overwrite WinDivert
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: \
+      run: |
         RD /S /Q ThirdParty\WinDivert &&
         RENAME ThirdParty\WinDivert-2.2.0-A WinDivert
 
