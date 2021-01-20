@@ -16,6 +16,10 @@ jobs:
       with:
         submodules: true
 
+    - name: List files
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: tree /f
+
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
 
