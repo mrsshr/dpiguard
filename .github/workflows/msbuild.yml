@@ -25,6 +25,10 @@ jobs:
       run: Expand-Archive -Path .\WinDivert-2.2.0-A.zip -DestinationPath .\ThirdParty -Force
       shell: powershell
 
+    - name: Overwrite WinDivert
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: MOVE /Y ThirdParty\WinDivert-2.2.0-A ThirdParty\WinDivert
+
     - name: List files
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: tree /f
