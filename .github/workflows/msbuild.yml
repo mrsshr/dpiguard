@@ -27,11 +27,13 @@ jobs:
 
     - name: Overwrite WinDivert
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: MOVE /Y ThirdParty\WinDivert-2.2.0-A ThirdParty\WinDivert
+      run: \
+        RD /S /Q ThirdParty\WinDivert && \
+        RENAME ThirdParty\WinDivert-2.2.0-A WinDivert
 
     - name: List files
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: tree /f
+      run: TREE /F
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1
