@@ -10,6 +10,13 @@ public:
 
     int Run(int argc, wchar_t* argv[]);
 private:
+    int CommandHelp();
+    int CommandVersion();
+    int CommandInstall();
+    int CommandUninstall();
+
+    bool ParseCommandLine(int argc, wchar_t* argv[]);
+
     void Main();
 
     bool HandlePacket(WinDivertPacket& packet);
@@ -56,6 +63,16 @@ private:
     std::mutex m_mainThreadLock;
 
     WinDivertLib m_divert;
+
+    enum class CommandType
+    {
+        None = 0,
+        Version,
+        Install,
+        Uninstall
+    };
+
+    CommandType m_commandType;
 };
 
 extern Application theApp;

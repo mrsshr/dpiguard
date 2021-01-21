@@ -111,6 +111,18 @@
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert32.sys" "$(OutDir)"
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>SETLOCAL
+
+FOR /F "TOKENS=*" %%F IN ('git describe --tags --dirty') DO (
+    SET GIT_TAG_VERSION=%%F
+)
+
+ECHO Application Version: %GIT_TAG_VERSION%
+ECHO #define APPLICATION_VERSION "%GIT_TAG_VERSION%" &gt; ApplicationVersion.h
+
+ENDLOCAL</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -143,6 +155,18 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" 
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert32.sys" "$(OutDir)"
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>SETLOCAL
+
+FOR /F "TOKENS=*" %%F IN ('git describe --tags --dirty') DO (
+    SET GIT_TAG_VERSION=%%F
+)
+
+ECHO Application Version: %GIT_TAG_VERSION%
+ECHO #define APPLICATION_VERSION "%GIT_TAG_VERSION%" &gt; ApplicationVersion.h
+
+ENDLOCAL</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -166,6 +190,18 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" 
       <Command>COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert.dll" "$(OutDir)"
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>SETLOCAL
+
+FOR /F "TOKENS=*" %%F IN ('git describe --tags --dirty') DO (
+    SET GIT_TAG_VERSION=%%F
+)
+
+ECHO Application Version: %GIT_TAG_VERSION%
+ECHO #define APPLICATION_VERSION "%GIT_TAG_VERSION%" &gt; ApplicationVersion.h
+
+ENDLOCAL</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -196,6 +232,18 @@ COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" 
       <Command>COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert.dll" "$(OutDir)"
 COPY /Y "$(SolutionDir)\ThirdParty\WinDivert\$(PlatformTarget)\WinDivert64.sys" "$(OutDir)"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>SETLOCAL
+
+FOR /F "TOKENS=*" %%F IN ('git describe --tags --dirty') DO (
+    SET GIT_TAG_VERSION=%%F
+)
+
+ECHO Application Version: %GIT_TAG_VERSION%
+ECHO #define APPLICATION_VERSION "%GIT_TAG_VERSION%" &gt; ApplicationVersion.h
+
+ENDLOCAL</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\ThirdParty\yaml-cpp\src\binary.cpp">
