@@ -16,6 +16,9 @@ jobs:
       with:
         submodules: true
 
+    - name: Fetch tags
+      run: git fetch --prune --unshallow --tags
+
     - name: Download WinDivert
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: curl -L https://github.com/basil00/Divert/releases/download/v2.2.0/WinDivert-2.2.0-A.zip -o WinDivert-2.2.0-A.zip
