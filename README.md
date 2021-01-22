@@ -11,6 +11,17 @@ Configurable HTTP, TLS fragmentation tool
 
 
 
+```
+Usage: DPIGuard [OPTION]
+
+  -h, --help               display this help and exit
+      --version            display version information and exit
+      --install            install DPIGuard service
+      --uninstall          uninstall DPIGuard service
+```
+
+
+
 ## Example configuration
 
 ```yaml
