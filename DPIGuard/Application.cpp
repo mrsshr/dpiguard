@@ -10,8 +10,11 @@ Application theApp;
 static wchar_t SERVICE_NAME[] = L"DPIGuard";
 
 static const char* WINDIVERT_HTTPS_FILTER = \
-"!loopback && outbound && (ip || ipv6) && length <= 4096 && " \
-"((tcp.DstPort == 80 || tcp.DstPort == 443) && tcp.PayloadLength > 0)";
+"!loopback && outbound && (ip || ipv6) && length <= 4096 && tcp.PayloadLength >= 16 &&"
+"("
+"tcp.DstPort == 80 || "
+"(tcp.DstPort == 443 && tcp.Payload[0] == 22 && tcp.Payload[1] == 3 && tcp.Payload[2] == 1)"
+")";
 
 Application::Application()
     : m_appConfigModifiedTime(), m_serviceMode(false), m_serviceStatusHandle(nullptr)
