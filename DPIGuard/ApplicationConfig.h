@@ -69,9 +69,9 @@ public:
     ApplicationConfig();
 
     const GlobalConfig& Global() const;
-    const std::list<DomainConfig>& Domains() const;
+    const std::list<std::shared_ptr<DomainConfig>>& Domains() const;
 
-    const DomainConfig* GetDomainConfig(const std::string& domain);
+    std::shared_ptr<const DomainConfig> GetDomainConfig(const std::string& domain);
 
     bool LoadFile(const std::wstring& filePath);
     bool Load(const std::string& configString);
@@ -81,7 +81,7 @@ public:
     YAML::Node Save();
 private:
     GlobalConfig m_globalConfig;
-    std::list<DomainConfig> m_domainConfigs;
+    std::list<std::shared_ptr<DomainConfig>> m_domainConfigs;
 
-    std::mutex m_lock;
+    std::shared_mutex m_lock;
 };

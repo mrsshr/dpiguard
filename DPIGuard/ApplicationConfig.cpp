@@ -11,30 +11,30 @@ const ApplicationConfig::GlobalConfig& ApplicationConfig::Global() const
     return m_globalConfig;
 }
 
-const std::list<ApplicationConfig::DomainConfig>& ApplicationConfig::Domains() const
+const std::list<std::shared_ptr<ApplicationConfig::DomainConfig>>& ApplicationConfig::Domains() const
 {
     return m_domainConfigs;
 }
 
-const ApplicationConfig::ApplicationConfig::DomainConfig* ApplicationConfig::GetDomainConfig(const std::string& domain)
+std::shared_ptr<const ApplicationConfig::DomainConfig> ApplicationConfig::GetDomainConfig(const std::string& domain)
 {
-    std::unique_lock<std::mutex> locked(m_lock);
+    std::shared_lock<std::shared_mutex> locked(m_lock);
 
-    for (const DomainConfig& domainConfig : Domains())
+    for (const std::shared_ptr<DomainConfig>& domainConfig : Domains())
     {
         size_t offset = 0;
 
-        if (domain.size() < domainConfig.domain.size())
+        if (domain.size() < domainConfig->domain.size())
             continue;
 
-        if (domainConfig.includeSubdomains)
-            offset = domain.size() - domainConfig.domain.size();
+        if (domainConfig->includeSubdomains)
+            offset = domain.size() - domainConfig->domain.size();
 
         bool match = std::equal(
             domain.cbegin() + offset,
             domain.cend(),
-            domainConfig.domain.cbegin(),
-            domainConfig.domain.cend(),
+            domainConfig->domain.cbegin(),
+            domainConfig->domain.cend(),
             [](char a, char b) {
                 return std::toupper(a) == std::toupper(b);
             });
@@ -45,7 +45,7 @@ const ApplicationConfig::ApplicationConfig::DomainConfig* ApplicationConfig::Get
         if (offset > 0 && domain[offset - 1] != '.')
             continue; // Not a subdomain
 
-        return &domainConfig;
+        return domainConfig;
     }
 
     return nullptr;
@@ -80,7 +80,7 @@ bool ApplicationConfig::Load(const std::string& configString)
 bool ApplicationConfig::Load(YAML::Node configNode)
 {
     GlobalConfig globalConfig;
-    std::list<DomainConfig> domainConfigs;
+    std::list<std::shared_ptr<DomainConfig>> domainConfigs;
 
     globalConfig.includeSubdomains = true;
     globalConfig.httpFragmentationEnabled = true;
@@ -90,7 +90,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
     if (configNode.IsNull())
     {
-        std::unique_lock<std::mutex> locked(m_lock);
+        std::unique_lock<std::shared_mutex> locked(m_lock);
 
         m_globalConfig = std::move(globalConfig);
         return true;
@@ -193,13 +193,13 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
         for (YAML::Node domainConfigNode : domainConfigsNode)
         {
-            DomainConfig domainConfig;
+            std::shared_ptr<DomainConfig> domainConfig = std::make_shared<DomainConfig>();
 
-            domainConfig.includeSubdomains = globalConfig.includeSubdomains;
-            domainConfig.httpFragmentationEnabled = globalConfig.httpFragmentationEnabled;
-            domainConfig.httpFragmentationOffset = globalConfig.httpFragmentationOffset;
-            domainConfig.tlsFragmentationEnabled = globalConfig.tlsFragmentationEnabled;
-            domainConfig.tlsFragmentationOffset = globalConfig.tlsFragmentationOffset;
+            domainConfig->includeSubdomains = globalConfig.includeSubdomains;
+            domainConfig->httpFragmentationEnabled = globalConfig.httpFragmentationEnabled;
+            domainConfig->httpFragmentationOffset = globalConfig.httpFragmentationOffset;
+            domainConfig->tlsFragmentationEnabled = globalConfig.tlsFragmentationEnabled;
+            domainConfig->tlsFragmentationOffset = globalConfig.tlsFragmentationOffset;
 
             if (domainConfigNode.IsMap())
             {
@@ -218,7 +218,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
                     if (domain.empty())
                         return false;
 
-                    domainConfig.domain = domain;
+                    domainConfig->domain = domain;
                 }
                 catch (const YAML::Exception&)
                 {
@@ -231,7 +231,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     try
                     {
-                        domainConfig.includeSubdomains = includeSubdomainsNode.as<bool>();
+                        domainConfig->includeSubdomains = includeSubdomainsNode.as<bool>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -253,7 +253,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     try
                     {
-                        domainConfig.httpFragmentationEnabled = httpFragmentationEnabledNode.as<bool>();
+                        domainConfig->httpFragmentationEnabled = httpFragmentationEnabledNode.as<bool>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -261,7 +261,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     try
                     {
-                        domainConfig.httpFragmentationOffset = httpFragmentationOffsetNode.as<size_t>();
+                        domainConfig->httpFragmentationOffset = httpFragmentationOffsetNode.as<size_t>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -283,7 +283,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     try
                     {
-                        domainConfig.tlsFragmentationEnabled = tlsFragmentationEnabledNode.as<bool>();
+                        domainConfig->tlsFragmentationEnabled = tlsFragmentationEnabledNode.as<bool>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -291,7 +291,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     try
                     {
-                        domainConfig.tlsFragmentationOffset = tlsFragmentationOffsetNode.as<size_t>();
+                        domainConfig->tlsFragmentationOffset = tlsFragmentationOffsetNode.as<size_t>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -307,7 +307,7 @@ bool ApplicationConfig::Load(YAML::Node configNode)
                     if (domain.empty())
                         return false;
 
-                    domainConfig.domain = domain;
+                    domainConfig->domain = domain;
                 }
                 catch (const YAML::Exception&)
                 {
@@ -319,12 +319,12 @@ bool ApplicationConfig::Load(YAML::Node configNode)
                 return false;
             }
 
-            domainConfigs.push_back(domainConfig);
+            domainConfigs.push_back(std::move(domainConfig));
         }
     }
 
     {
-        std::unique_lock<std::mutex> locked(m_lock);
+        std::unique_lock<std::shared_mutex> locked(m_lock);
 
         m_globalConfig = std::move(globalConfig);
         m_domainConfigs = std::move(domainConfigs);
@@ -364,30 +364,30 @@ YAML::Node ApplicationConfig::Save()
     tlsFragmentationNode["offset"] = m_globalConfig.tlsFragmentationOffset;
 
     YAML::Node domainsConfigNode = configNode["domains"];
-    for (const DomainConfig& domainConfig : m_domainConfigs)
+    for (const std::shared_ptr<DomainConfig>& domainConfig : m_domainConfigs)
     {
         YAML::Node domainConfigNode;
 
-        if (m_globalConfig == domainConfig)
+        if (m_globalConfig == *domainConfig)
         {
-            domainConfigNode = domainConfig.domain;
+            domainConfigNode = domainConfig->domain;
         }
         else
         {
-            domainConfigNode["domain"] = domainConfig.domain;
+            domainConfigNode["domain"] = domainConfig->domain;
 
-            if (m_globalConfig.includeSubdomains != domainConfig.includeSubdomains)
-                domainConfigNode["includeSubdomains"] = domainConfig.includeSubdomains;
+            if (m_globalConfig.includeSubdomains != domainConfig->includeSubdomains)
+                domainConfigNode["includeSubdomains"] = domainConfig->includeSubdomains;
 
-            if (m_globalConfig.httpFragmentationEnabled != domainConfig.httpFragmentationEnabled)
-                domainConfigNode["httpFragmentation"]["enabled"] = domainConfig.httpFragmentationEnabled;
-            if (m_globalConfig.httpFragmentationOffset != domainConfig.httpFragmentationOffset)
-                domainConfigNode["httpFragmentation"]["offset"] = domainConfig.httpFragmentationOffset;
+            if (m_globalConfig.httpFragmentationEnabled != domainConfig->httpFragmentationEnabled)
+                domainConfigNode["httpFragmentation"]["enabled"] = domainConfig->httpFragmentationEnabled;
+            if (m_globalConfig.httpFragmentationOffset != domainConfig->httpFragmentationOffset)
+                domainConfigNode["httpFragmentation"]["offset"] = domainConfig->httpFragmentationOffset;
 
-            if (m_globalConfig.tlsFragmentationEnabled != domainConfig.tlsFragmentationEnabled)
-                domainConfigNode["tlsFragmentation"]["enabled"] = domainConfig.tlsFragmentationEnabled;
-            if (m_globalConfig.tlsFragmentationOffset != domainConfig.tlsFragmentationOffset)
-                domainConfigNode["tlsFragmentation"]["offset"] = domainConfig.tlsFragmentationOffset;
+            if (m_globalConfig.tlsFragmentationEnabled != domainConfig->tlsFragmentationEnabled)
+                domainConfigNode["tlsFragmentation"]["enabled"] = domainConfig->tlsFragmentationEnabled;
+            if (m_globalConfig.tlsFragmentationOffset != domainConfig->tlsFragmentationOffset)
+                domainConfigNode["tlsFragmentation"]["offset"] = domainConfig->tlsFragmentationOffset;
         }
 
         domainsConfigNode.push_back(domainConfigNode);

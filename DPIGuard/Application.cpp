@@ -419,7 +419,7 @@ void Application::ConfigMonitor()
                 continue;
             }
             
-            printf("[+] A new configuration file has been reloaded.\n");
+            printf("[+] The configuration file has been reloaded.\n");
         }
     }
 }
@@ -602,9 +602,9 @@ bool Application::HandleHttps(WinDivertPacket& packet)
 
 bool Application::HandleHttpFragmentation(WinDivertPacket& packet, const std::string& hostName, size_t hostNameOffset)
 {
-    const ApplicationConfig::DomainConfig* domainConfig = m_appConfig.GetDomainConfig(hostName);
+    std::shared_ptr<const ApplicationConfig::DomainConfig> domainConfig = m_appConfig.GetDomainConfig(hostName);
 
-    if (domainConfig == nullptr)
+    if (!domainConfig)
     {
         printf("[+] HTTP[Skip]: %s\n", hostName.c_str());
         return false;
@@ -619,9 +619,9 @@ bool Application::HandleHttpFragmentation(WinDivertPacket& packet, const std::st
 
 bool Application::HandleTlsFragmentation(WinDivertPacket& packet, const std::string& serverName, size_t serverNameOffset)
 {
-    const ApplicationConfig::DomainConfig* domainConfig = m_appConfig.GetDomainConfig(serverName);
+    std::shared_ptr<const ApplicationConfig::DomainConfig> domainConfig = m_appConfig.GetDomainConfig(serverName);
 
-    if (domainConfig == nullptr)
+    if (!domainConfig)
     {
         printf("[+] TLS[Skip]: %s\n", serverName.c_str());
         return false;
