@@ -71,6 +71,8 @@ public:
     const GlobalConfig& Global() const;
     const std::list<DomainConfig>& Domains() const;
 
+    const DomainConfig* GetDomainConfig(const std::string& domain);
+
     bool LoadFile(const std::wstring& filePath);
     bool Load(const std::string& configString);
     bool Load(YAML::Node configNode);
@@ -80,4 +82,6 @@ public:
 private:
     GlobalConfig m_globalConfig;
     std::list<DomainConfig> m_domainConfigs;
+
+    std::mutex m_lock;
 };

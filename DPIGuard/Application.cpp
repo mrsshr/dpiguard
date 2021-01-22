@@ -15,7 +15,7 @@ static const char* WINDIVERT_HTTPS_FILTER = \
 
 Application::Application()
     : m_appConfigModifiedTime(), m_serviceMode(false), m_serviceStatusHandle(nullptr)
-    , m_commandType(CommandType::None)
+    , m_configMonitorStop(false), m_commandType(CommandType::None)
 {
 }
 
@@ -353,7 +353,7 @@ void Application::Main()
 
     m_appConfig.SaveFile(m_appConfigPath);
 
-    Utils::CheckFileModified(m_appConfigPath.c_str(), m_appConfigModifiedTime);
+    StartConfigMonitor();
 
     if (!m_serviceMode)
         SetConsoleCtrlHandler(&Application::ConsoleCtrlHandlerProc, TRUE);
@@ -389,11 +389,39 @@ void Application::Main()
         printf("[-] Unexpected error. Aborting (%s)\n", e.what());
     }
 
+    StopConfigMonitor();
     StopWinDivert();
 
     ReportStopped();
 
     printf("[+] Stopped\n");
+}
+
+void Application::ConfigMonitor()
+{
+    bool result = false;
+
+    while (!result)
+    {
+        std::unique_lock<std::mutex> locked(m_configMonitorLock);
+
+        result = m_configMonitorCv.wait_for(locked, std::chrono::seconds(5), [&]() {
+            return m_configMonitorStop;
+        });
+
+        if (!result) {
+            if (!Utils::CheckFileModified(m_appConfigPath.c_str(), m_appConfigModifiedTime))
+                continue;
+
+            if (!m_appConfig.LoadFile(m_appConfigPath))
+            {
+                printf("[-] The new configuration file is invalid or corrupted.\n");
+                continue;
+            }
+            
+            printf("[+] A new configuration file has been reloaded.\n");
+        }
+    }
 }
 
 bool Application::HandlePacket(WinDivertPacket& packet)
@@ -574,7 +602,7 @@ bool Application::HandleHttps(WinDivertPacket& packet)
 
 bool Application::HandleHttpFragmentation(WinDivertPacket& packet, const std::string& hostName, size_t hostNameOffset)
 {
-    const ApplicationConfig::DomainConfig* domainConfig = GetDomainConfig(hostName);
+    const ApplicationConfig::DomainConfig* domainConfig = m_appConfig.GetDomainConfig(hostName);
 
     if (domainConfig == nullptr)
     {
@@ -591,7 +619,7 @@ bool Application::HandleHttpFragmentation(WinDivertPacket& packet, const std::st
 
 bool Application::HandleTlsFragmentation(WinDivertPacket& packet, const std::string& serverName, size_t serverNameOffset)
 {
-    const ApplicationConfig::DomainConfig* domainConfig = GetDomainConfig(serverName);
+    const ApplicationConfig::DomainConfig* domainConfig = m_appConfig.GetDomainConfig(serverName);
 
     if (domainConfig == nullptr)
     {
@@ -643,39 +671,6 @@ bool Application::DoTcpFragmentation(WinDivertPacket& packet, size_t offset)
     return true;
 }
 
-const ApplicationConfig::DomainConfig* Application::GetDomainConfig(const std::string& domain)
-{
-    for (const ApplicationConfig::DomainConfig& domainConfig : m_appConfig.Domains())
-    {
-        size_t offset = 0;
-
-        if (domain.size() < domainConfig.domain.size())
-            continue;
-
-        if (domainConfig.includeSubdomains)
-            offset = domain.size() - domainConfig.domain.size();
-
-        bool match = std::equal(
-            domain.cbegin() + offset,
-            domain.cend(),
-            domainConfig.domain.cbegin(),
-            domainConfig.domain.cend(),
-            [](char a, char b) {
-            return std::toupper(a) == std::toupper(b);
-        });
-
-        if (!match)
-            continue;
-
-        if (offset > 0 && domain[offset - 1] != '.')
-            continue; // Not a subdomain
-
-        return &domainConfig;
-    }
-
-    return nullptr;
-}
-
 void Application::StartMainThread()
 {
     m_mainThread = std::make_unique<std::thread>(&Application::Main, this);
@@ -687,6 +682,26 @@ void Application::WaitMainThread()
 
     if (m_mainThread && m_mainThread->joinable())
         m_mainThread->join();
+}
+
+void Application::StartConfigMonitor()
+{
+    Utils::CheckFileModified(m_appConfigPath.c_str(), m_appConfigModifiedTime);
+
+    m_configMonitorThread.reset(new std::thread(&Application::ConfigMonitor, this));
+}
+
+void Application::StopConfigMonitor()
+{
+    {
+        std::unique_lock<std::mutex> locked(m_configMonitorLock);
+        m_configMonitorStop = true;
+    }
+
+    m_configMonitorCv.notify_all();
+
+    if (m_configMonitorThread->joinable())
+        m_configMonitorThread->join();
 }
 
 void Application::StopWinDivert()

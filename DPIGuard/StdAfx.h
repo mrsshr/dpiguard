@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <algorithm>
+#include <condition_variable>
 #include <thread>
 #include <memory>
 #include <mutex>
