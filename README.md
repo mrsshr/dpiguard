@@ -6,7 +6,7 @@ Configurable HTTP, TLS fragmentation tool
 
 
 * HTTP, TLS fragmentation only for specified domains
-* Support running as a service (Manual installation)
+* Support running as a service
 * Small memory footprint
 
 
