@@ -16,6 +16,41 @@ const std::list<ApplicationConfig::DomainConfig>& ApplicationConfig::Domains() c
     return m_domainConfigs;
 }
 
+const ApplicationConfig::ApplicationConfig::DomainConfig* ApplicationConfig::GetDomainConfig(const std::string& domain)
+{
+    std::unique_lock<std::mutex> locked(m_lock);
+
+    for (const DomainConfig& domainConfig : Domains())
+    {
+        size_t offset = 0;
+
+        if (domain.size() < domainConfig.domain.size())
+            continue;
+
+        if (domainConfig.includeSubdomains)
+            offset = domain.size() - domainConfig.domain.size();
+
+        bool match = std::equal(
+            domain.cbegin() + offset,
+            domain.cend(),
+            domainConfig.domain.cbegin(),
+            domainConfig.domain.cend(),
+            [](char a, char b) {
+                return std::toupper(a) == std::toupper(b);
+            });
+
+        if (!match)
+            continue;
+
+        if (offset > 0 && domain[offset - 1] != '.')
+            continue; // Not a subdomain
+
+        return &domainConfig;
+    }
+
+    return nullptr;
+}
+
 bool ApplicationConfig::LoadFile(const std::wstring& filePath)
 {
     std::string configString = Utils::ReadTextFile(filePath.c_str());
@@ -55,6 +90,8 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
     if (configNode.IsNull())
     {
+        std::unique_lock<std::mutex> locked(m_lock);
+
         m_globalConfig = std::move(globalConfig);
         return true;
     }
@@ -286,8 +323,12 @@ bool ApplicationConfig::Load(YAML::Node configNode)
         }
     }
 
-    m_globalConfig = std::move(globalConfig);
-    m_domainConfigs = std::move(domainConfigs);
+    {
+        std::unique_lock<std::mutex> locked(m_lock);
+
+        m_globalConfig = std::move(globalConfig);
+        m_domainConfigs = std::move(domainConfigs);
+    }
 
     return true;
 }

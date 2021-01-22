@@ -18,6 +18,7 @@ private:
     bool ParseCommandLine(int argc, wchar_t* argv[]);
 
     void Main();
+    void ConfigMonitor();
 
     bool HandlePacket(WinDivertPacket& packet);
     bool HandleHttp(WinDivertPacket& packet);
@@ -28,10 +29,11 @@ private:
 
     bool DoTcpFragmentation(WinDivertPacket& packet, size_t offset);
 
-    const ApplicationConfig::DomainConfig* GetDomainConfig(const std::string& domain);
-
     void StartMainThread();
     void WaitMainThread();
+
+    void StartConfigMonitor();
+    void StopConfigMonitor();
 
     void StopWinDivert();
 private:
@@ -61,6 +63,11 @@ private:
 
     std::unique_ptr<std::thread> m_mainThread;
     std::mutex m_mainThreadLock;
+
+    std::unique_ptr<std::thread> m_configMonitorThread;
+    std::condition_variable m_configMonitorCv;
+    std::mutex m_configMonitorLock;
+    bool m_configMonitorStop;
 
     WinDivertLib m_divert;
 
