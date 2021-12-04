@@ -121,6 +121,40 @@ bool Utils::CheckFileModified(const wchar_t* filePath, FILETIME& lastModifiedTim
     return true;
 }
 
+bool Utils::MatchString(const char* s, const char* pattern)
+{
+    while (*s && *pattern)
+    {
+        if (*pattern == '*')
+        {
+            do
+            {
+                if (MatchString(s, pattern + 1))
+                    return true;
+            } while (*s++);
+
+            return false;
+        }
+
+        if ((toupper(*s) != toupper(*pattern)) && *pattern != '?')
+            return false;
+
+        s++;
+        pattern++;
+    }
+
+    if (*s == '\0')
+    {
+        while (*pattern == '*')
+            pattern++;
+
+        if (*pattern == '\0')
+            return true;
+    }
+
+    return false;
+}
+
 std::string Utils::FormatIPAddress(uint32_t addr)
 {
     char buffer[32];

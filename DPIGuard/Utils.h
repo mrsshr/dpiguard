@@ -11,6 +11,8 @@ public:
 
     static bool CheckFileModified(const wchar_t* filePath, FILETIME& lastModifiedTime);
 
+    static bool MatchString(const char* s, const char* pattern);
+
     static std::string FormatIPAddress(uint32_t addr);
     static std::string FormatIPAddress(const uint32_t* addr);
 

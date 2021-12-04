@@ -22,30 +22,11 @@ std::shared_ptr<const ApplicationConfig::DomainConfig> ApplicationConfig::GetDom
 
     for (const std::shared_ptr<DomainConfig>& domainConfig : Domains())
     {
-        size_t offset = 0;
-
-        if (domain.size() < domainConfig->domain.size())
-            continue;
-
-        if (domainConfig->includeSubdomains)
-            offset = domain.size() - domainConfig->domain.size();
-
-        bool match = std::equal(
-            domain.cbegin() + offset,
-            domain.cend(),
-            domainConfig->domain.cbegin(),
-            domainConfig->domain.cend(),
-            [](char a, char b) {
-                return std::toupper(a) == std::toupper(b);
-            });
-
-        if (!match)
-            continue;
-
-        if (offset > 0 && domain[offset - 1] != '.')
-            continue; // Not a subdomain
-
-        return domainConfig;
+        for (const std::string& domainPattern : domainConfig->domainPatterns)
+        {
+            if (Utils::MatchString(domain.c_str(), domainPattern.c_str()))
+                return domainConfig;
+        }
     }
 
     return nullptr;
@@ -318,6 +299,10 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             {
                 return false;
             }
+
+            domainConfig->domainPatterns.push_back(domainConfig->domain);
+            if (domainConfig->includeSubdomains)
+                domainConfig->domainPatterns.push_back("*." + domainConfig->domain);
 
             domainConfigs.push_back(std::move(domainConfig));
         }

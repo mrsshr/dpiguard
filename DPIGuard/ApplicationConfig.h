@@ -16,6 +16,7 @@ public:
             tlsFragmentationOffset = 0;
         }
 
+        std::list<std::string> domainPatterns;
         std::string domain;
         bool includeSubdomains;
 
