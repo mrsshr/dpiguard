@@ -42,6 +42,8 @@ domains:
       enabled: false
     tlsFragmentation:
       offset: 20
+  - example*.com # '*' matches zero or more characters.
+  - example?.com # '?' matches single character.
 ```
 
 
