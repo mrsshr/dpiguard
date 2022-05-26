@@ -30,9 +30,11 @@ global:
   httpFragmentation:
     enabled: true
     offset: 2
+    outOfOrder: true
   tlsFragmentation:
     enabled: true
     offset: 2
+    outOfOrder: true
 domains:
   - example.com # example.com will include subdomains
   - domain: example2.com # example2.com will not include subdomains
@@ -42,6 +44,7 @@ domains:
       enabled: false
     tlsFragmentation:
       offset: 20
+      outOfOrder: false
   - example*.com # '*' matches zero or more characters.
   - example?.com # '?' matches single character.
 ```
