@@ -2,10 +2,6 @@
 #include "ApplicationConfig.h"
 #include "Utils.h"
 
-ApplicationConfig::ApplicationConfig()
-{
-}
-
 const ApplicationConfig::GlobalConfig& ApplicationConfig::Global() const
 {
     return m_globalConfig;
@@ -34,7 +30,7 @@ std::shared_ptr<const ApplicationConfig::DomainConfig> ApplicationConfig::GetDom
 
 bool ApplicationConfig::LoadFile(const std::wstring& filePath)
 {
-    std::string configString = Utils::ReadTextFile(filePath.c_str());
+    const std::string configString = Utils::ReadTextFile(filePath.c_str());
 
     return Load(configString);
 }
@@ -66,14 +62,16 @@ bool ApplicationConfig::Load(YAML::Node configNode)
     globalConfig.includeSubdomains = true;
     globalConfig.httpFragmentationEnabled = true;
     globalConfig.httpFragmentationOffset = 2;
+    globalConfig.httpFragmentationOutOfOrder = true;
     globalConfig.tlsFragmentationEnabled = true;
     globalConfig.tlsFragmentationOffset = 2;
+    globalConfig.tlsFragmentationOutOfOrder = true;
 
     if (configNode.IsNull())
     {
         std::unique_lock<std::shared_mutex> locked(m_lock);
 
-        m_globalConfig = std::move(globalConfig);
+        m_globalConfig = globalConfig;
         return true;
     }
 
@@ -113,10 +111,13 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
             YAML::Node httpFragmentationEnabledNode = httpFragmentationNode["enabled"];
             YAML::Node httpFragmentationOffsetNode = httpFragmentationNode["offset"];
+            YAML::Node httpFragmentationOutOfOrderNode = httpFragmentationNode["outOfOrder"];
 
             if (httpFragmentationEnabledNode.IsDefined() && !httpFragmentationEnabledNode.IsScalar())
                 return false;
             if (httpFragmentationOffsetNode.IsDefined() && !httpFragmentationOffsetNode.IsScalar())
+                return false;
+            if (httpFragmentationOutOfOrderNode.IsDefined() && !httpFragmentationOutOfOrderNode.IsScalar())
                 return false;
 
             try
@@ -134,6 +135,14 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             catch (const YAML::Exception&)
             {
             }
+
+            try
+            {
+                globalConfig.httpFragmentationOutOfOrder = httpFragmentationOutOfOrderNode.as<bool>();
+            }
+            catch (const YAML::Exception&)
+            {
+            }
         }
 
         if (tlsFragmentationNode.IsDefined())
@@ -143,10 +152,13 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
             YAML::Node tlsFragmentationEnabledNode = tlsFragmentationNode["enabled"];
             YAML::Node tlsFragmentationOffsetNode = tlsFragmentationNode["offset"];
+            YAML::Node tlsFragmentationOutOfOrderNode = tlsFragmentationNode["outOfOrder"];
 
             if (tlsFragmentationEnabledNode.IsDefined() && !tlsFragmentationEnabledNode.IsScalar())
                 return false;
             if (tlsFragmentationOffsetNode.IsDefined() && !tlsFragmentationOffsetNode.IsScalar())
+                return false;
+            if (tlsFragmentationOutOfOrderNode.IsDefined() && !tlsFragmentationOutOfOrderNode.IsScalar())
                 return false;
 
             try
@@ -160,6 +172,14 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             try
             {
                 globalConfig.tlsFragmentationOffset = tlsFragmentationOffsetNode.as<size_t>();
+            }
+            catch (const YAML::Exception&)
+            {
+            }
+
+            try
+            {
+                globalConfig.tlsFragmentationOutOfOrder = tlsFragmentationOutOfOrderNode.as<bool>();
             }
             catch (const YAML::Exception&)
             {
@@ -179,8 +199,10 @@ bool ApplicationConfig::Load(YAML::Node configNode)
             domainConfig->includeSubdomains = globalConfig.includeSubdomains;
             domainConfig->httpFragmentationEnabled = globalConfig.httpFragmentationEnabled;
             domainConfig->httpFragmentationOffset = globalConfig.httpFragmentationOffset;
+            domainConfig->httpFragmentationOutOfOrder = globalConfig.httpFragmentationOutOfOrder;
             domainConfig->tlsFragmentationEnabled = globalConfig.tlsFragmentationEnabled;
             domainConfig->tlsFragmentationOffset = globalConfig.tlsFragmentationOffset;
+            domainConfig->tlsFragmentationOutOfOrder = globalConfig.tlsFragmentationOutOfOrder;
 
             if (domainConfigNode.IsMap())
             {
@@ -226,10 +248,13 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     YAML::Node httpFragmentationEnabledNode = httpFragmentationNode["enabled"];
                     YAML::Node httpFragmentationOffsetNode = httpFragmentationNode["offset"];
+                    YAML::Node httpFragmentationOutOfOrderNode = httpFragmentationNode["outOfOrder"];
 
                     if (httpFragmentationEnabledNode.IsDefined() && !httpFragmentationEnabledNode.IsScalar())
                         return false;
                     if (httpFragmentationOffsetNode.IsDefined() && !httpFragmentationOffsetNode.IsScalar())
+                        return false;
+                    if (httpFragmentationOutOfOrderNode.IsDefined() && !httpFragmentationOutOfOrderNode.IsScalar())
                         return false;
 
                     try
@@ -247,6 +272,14 @@ bool ApplicationConfig::Load(YAML::Node configNode)
                     catch (const YAML::Exception&)
                     {
                     }
+
+                    try
+                    {
+                        domainConfig->httpFragmentationOutOfOrder = httpFragmentationOutOfOrderNode.as<bool>();
+                    }
+                    catch (const YAML::Exception&)
+                    {
+                    }
                 }
 
                 if (tlsFragmentationNode.IsDefined())
@@ -256,10 +289,13 @@ bool ApplicationConfig::Load(YAML::Node configNode)
 
                     YAML::Node tlsFragmentationEnabledNode = tlsFragmentationNode["enabled"];
                     YAML::Node tlsFragmentationOffsetNode = tlsFragmentationNode["offset"];
+                    YAML::Node tlsFragmentationOutOfOrderNode = tlsFragmentationNode["outOfOrder"];
 
                     if (tlsFragmentationEnabledNode.IsDefined() && !tlsFragmentationEnabledNode.IsScalar())
                         return false;
                     if (tlsFragmentationOffsetNode.IsDefined() && !tlsFragmentationOffsetNode.IsScalar())
+                        return false;
+                    if (tlsFragmentationOutOfOrderNode.IsDefined() && !tlsFragmentationOutOfOrderNode.IsScalar())
                         return false;
 
                     try
@@ -273,6 +309,14 @@ bool ApplicationConfig::Load(YAML::Node configNode)
                     try
                     {
                         domainConfig->tlsFragmentationOffset = tlsFragmentationOffsetNode.as<size_t>();
+                    }
+                    catch (const YAML::Exception&)
+                    {
+                    }
+
+                    try
+                    {
+                        domainConfig->tlsFragmentationOutOfOrder = tlsFragmentationOutOfOrderNode.as<bool>();
                     }
                     catch (const YAML::Exception&)
                     {
@@ -311,19 +355,19 @@ bool ApplicationConfig::Load(YAML::Node configNode)
     {
         std::unique_lock<std::shared_mutex> locked(m_lock);
 
-        m_globalConfig = std::move(globalConfig);
+        m_globalConfig = globalConfig;
         m_domainConfigs = std::move(domainConfigs);
     }
 
     return true;
 }
 
-bool ApplicationConfig::SaveFile(const std::wstring& filePath)
+bool ApplicationConfig::SaveFile(const std::wstring& filePath) const
 {
     try
     {
-        YAML::Node configNode = Save();
-        std::string configString = YAML::Dump(configNode);
+        const YAML::Node configNode = Save();
+        const std::string configString = YAML::Dump(configNode);
 
         return Utils::WriteTextFile(configString, filePath.c_str());
     }
@@ -333,7 +377,7 @@ bool ApplicationConfig::SaveFile(const std::wstring& filePath)
     }
 }
 
-YAML::Node ApplicationConfig::Save()
+YAML::Node ApplicationConfig::Save() const
 {
     YAML::Node configNode;
 
@@ -343,10 +387,12 @@ YAML::Node ApplicationConfig::Save()
     YAML::Node httpFragmentationNode = globalConfigNode["httpFragmentation"];
     httpFragmentationNode["enabled"] = m_globalConfig.httpFragmentationEnabled;
     httpFragmentationNode["offset"] = m_globalConfig.httpFragmentationOffset;
+    httpFragmentationNode["outOfOrder"] = m_globalConfig.httpFragmentationOutOfOrder;
 
     YAML::Node tlsFragmentationNode = globalConfigNode["tlsFragmentation"];
     tlsFragmentationNode["enabled"] = m_globalConfig.tlsFragmentationEnabled;
     tlsFragmentationNode["offset"] = m_globalConfig.tlsFragmentationOffset;
+    tlsFragmentationNode["outOfOrder"] = m_globalConfig.tlsFragmentationOutOfOrder;
 
     YAML::Node domainsConfigNode = configNode["domains"];
     for (const std::shared_ptr<DomainConfig>& domainConfig : m_domainConfigs)
@@ -368,11 +414,15 @@ YAML::Node ApplicationConfig::Save()
                 domainConfigNode["httpFragmentation"]["enabled"] = domainConfig->httpFragmentationEnabled;
             if (m_globalConfig.httpFragmentationOffset != domainConfig->httpFragmentationOffset)
                 domainConfigNode["httpFragmentation"]["offset"] = domainConfig->httpFragmentationOffset;
+            if (m_globalConfig.httpFragmentationOutOfOrder != domainConfig->httpFragmentationOutOfOrder)
+                domainConfigNode["httpFragmentation"]["outOfOrder"] = domainConfig->httpFragmentationOutOfOrder;
 
             if (m_globalConfig.tlsFragmentationEnabled != domainConfig->tlsFragmentationEnabled)
                 domainConfigNode["tlsFragmentation"]["enabled"] = domainConfig->tlsFragmentationEnabled;
             if (m_globalConfig.tlsFragmentationOffset != domainConfig->tlsFragmentationOffset)
                 domainConfigNode["tlsFragmentation"]["offset"] = domainConfig->tlsFragmentationOffset;
+            if (m_globalConfig.tlsFragmentationOutOfOrder != domainConfig->tlsFragmentationOutOfOrder)
+                domainConfigNode["tlsFragmentation"]["outOfOrder"] = domainConfig->tlsFragmentationOutOfOrder;
         }
 
         domainsConfigNode.push_back(domainConfigNode);

@@ -617,7 +617,7 @@ bool Application::HandleHttpFragmentation(WinDivertPacket& packet, const std::st
         return false;
 
     printf("[+] HTTP[OK]: %s\n", hostName.c_str());
-    return DoTcpFragmentation(packet, domainConfig->httpFragmentationOffset);
+    return DoTcpFragmentation(packet, domainConfig->httpFragmentationOffset, domainConfig->httpFragmentationOutOfOrder);
 }
 
 bool Application::HandleTlsFragmentation(WinDivertPacket& packet, const std::string& serverName, size_t serverNameOffset)
@@ -634,10 +634,10 @@ bool Application::HandleTlsFragmentation(WinDivertPacket& packet, const std::str
         return false;
 
     printf("[+] TLS[OK]: %s\n", serverName.c_str());
-    return DoTcpFragmentation(packet, domainConfig->tlsFragmentationOffset);
+    return DoTcpFragmentation(packet, domainConfig->tlsFragmentationOffset, domainConfig->tlsFragmentationOutOfOrder);
 }
 
-bool Application::DoTcpFragmentation(WinDivertPacket& packet, size_t offset)
+bool Application::DoTcpFragmentation(WinDivertPacket& packet, size_t offset, bool outOfOrder)
 {
     size_t headerLength = packet.Data() - packet.Buffer().data();
 
@@ -667,6 +667,9 @@ bool Application::DoTcpFragmentation(WinDivertPacket& packet, size_t offset)
         secondPacket.IPv6()->Length = Utils::htons(static_cast<uint16_t>(secondPacket.Buffer().size()));
     secondPacket.Tcp()->SeqNum = Utils::htonl(Utils::ntohl(firstPacket.Tcp()->SeqNum) + static_cast<uint32_t>(firstDataLength));
     secondPacket.RecalcChecksum();
+
+    if (outOfOrder)
+        std::swap(firstPacket, secondPacket);
 
     m_divert.Send(firstPacket);
     m_divert.Send(secondPacket);

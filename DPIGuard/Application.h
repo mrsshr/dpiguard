@@ -27,7 +27,7 @@ private:
     bool HandleHttpFragmentation(WinDivertPacket& packet, const std::string& hostName, size_t hostNameOffset);
     bool HandleTlsFragmentation(WinDivertPacket& packet, const std::string& serverName, size_t serverNameOffset);
 
-    bool DoTcpFragmentation(WinDivertPacket& packet, size_t offset);
+    bool DoTcpFragmentation(WinDivertPacket& packet, size_t offset, bool outOfOrder);
 
     void StartMainThread();
     void WaitMainThread();

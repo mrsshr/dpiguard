@@ -11,9 +11,11 @@ public:
 
             httpFragmentationEnabled = false;
             httpFragmentationOffset = 0;
+            httpFragmentationOutOfOrder = false;
 
             tlsFragmentationEnabled = false;
             tlsFragmentationOffset = 0;
+            tlsFragmentationOutOfOrder = false;
         }
 
         std::list<std::string> domainPatterns;
@@ -22,9 +24,11 @@ public:
 
         bool httpFragmentationEnabled;
         size_t httpFragmentationOffset;
+        bool httpFragmentationOutOfOrder;
 
         bool tlsFragmentationEnabled;
         size_t tlsFragmentationOffset;
+        bool tlsFragmentationOutOfOrder;
     };
 
     struct GlobalConfig
@@ -35,9 +39,11 @@ public:
 
             httpFragmentationEnabled = false;
             httpFragmentationOffset = 0;
+            httpFragmentationOutOfOrder = false;
 
             tlsFragmentationEnabled = false;
             tlsFragmentationOffset = 0;
+            tlsFragmentationOutOfOrder = false;
         }
 
         bool operator==(const DomainConfig& rhs) const
@@ -49,10 +55,14 @@ public:
                 return false;
             if (httpFragmentationOffset != rhs.httpFragmentationOffset)
                 return false;
+            if (httpFragmentationOutOfOrder != rhs.httpFragmentationOutOfOrder)
+                return false;
 
             if (tlsFragmentationEnabled != rhs.tlsFragmentationEnabled)
                 return false;
             if (tlsFragmentationOffset != rhs.tlsFragmentationOffset)
+                return false;
+            if (tlsFragmentationOutOfOrder != rhs.tlsFragmentationOutOfOrder)
                 return false;
 
             return true;
@@ -62,12 +72,14 @@ public:
 
         bool httpFragmentationEnabled;
         size_t httpFragmentationOffset;
+        bool httpFragmentationOutOfOrder;
 
         bool tlsFragmentationEnabled;
         size_t tlsFragmentationOffset;
+        bool tlsFragmentationOutOfOrder;
     };
 public:
-    ApplicationConfig();
+    ApplicationConfig() = default;
 
     const GlobalConfig& Global() const;
     const std::list<std::shared_ptr<DomainConfig>>& Domains() const;
@@ -78,8 +90,8 @@ public:
     bool Load(const std::string& configString);
     bool Load(YAML::Node configNode);
 
-    bool SaveFile(const std::wstring& filePath);
-    YAML::Node Save();
+    bool SaveFile(const std::wstring& filePath) const;
+    YAML::Node Save() const;
 private:
     GlobalConfig m_globalConfig;
     std::list<std::shared_ptr<DomainConfig>> m_domainConfigs;
